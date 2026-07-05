@@ -39,7 +39,7 @@ The core insight of the J–M model is elegant: **each bug fix permanently reduc
 Open `index.html` directly in any modern browser — no server, no build step, no installation required.
 
 ```
-git clone https://github.com/your-username/jm-reliability-model.git
+git clone https://github.com/your-username/jm-model.git
 cd jm-reliability-model
 open index.html        # macOS
 start index.html       # Windows
@@ -55,7 +55,6 @@ Or use **VS Code Live Server** for hot-reload during development.
 ## Features
 
 ### Core Sections
-- **Hero** — Author introduction with photo, project title, and live animated bug-fix strip
 - **Theory** — Deep mathematical treatment of the model from first principles
 - **Simulation** — Live interactive simulation with real-time chart
 - **Model Comparison** — Side-by-side table against 4 competing reliability models
@@ -147,7 +146,6 @@ Where `xᵢ` are the observed inter-failure times and `n` is the number of obser
 jm-reliability-model/
 │
 ├── index.html              # All HTML structure and content
-├── agam.jpg                # Author photo (referenced in index.html)
 │
 ├── css/
 │   ├── base.css            # CSS variables, typography, reset, fonts
@@ -241,8 +239,6 @@ Then visit `http://localhost:5500`
 ---
 
 ## Screenshots
-
-> The hero section showing the author card alongside the project title
 
 > The staircase graph — grey dashed theoretical model, cyan user progress, dots at each fix event
 
