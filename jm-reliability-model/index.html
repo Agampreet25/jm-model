@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jelinski–Moranda Model: Visualizing Software Reliability</title>
+  <!-- Fonts loaded via @import in css/base.css (Playfair Display + Nunito Sans) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/simulation.css">
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- ── NAVIGATION ── -->
+<nav>
+  <div class="nav-logo">J–M Model</div>
+  <ul class="nav-links">
+    <li><a href="#hero">Overview</a></li>
+    <li><a href="#theory">Theory</a></li>
+    <li><a href="#simulation">Simulation</a></li>
+    <li><a href="#comparison">Compare</a></li>
+    <li><a href="#limitations">Limitations</a></li>
+  </ul>
+  <button class="theme-toggle" id="theme-toggle" title="Toggle light/dark mode">Dark</button>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+
+
+    <!-- RIGHT: Title block -->
+    <div class="hero-title-block">
+      <div class="hero-tag">Software Reliability Theory · Jelinski &amp; Moranda (1972)</div>
+      <h1>Jelinski–Moranda<br><span class="accent">Reliability Model</span></h1>
+      <p class="hero-lead">Software is born with hidden flaws. Every bug found and fixed makes the system stronger. Watch how reliability evolves — one fix at a time.</p>
+      <div class="analogy-box">
+        <span>Like removing weak links from a chain — each bug fixed permanently strengthens the whole system, reducing the chance of failure in production.</span>
+      </div>
+      <div class="hero-btns">
+        <button class="btn btn-primary" onclick="document.getElementById('derivation-modal').classList.add('open')">View Derivation</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('questions-modal').classList.add('open')">Practice Problems</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bug-strip" id="hero-bugs">
+    <span class="bug-strip-label">Live bug state</span>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── DEEP THEORY SECTION ── -->
+<section id="theory" class="fade-in">
+  <div class="section-eyebrow">Detailed Theory</div>
+  <h2>The Mathematics Behind the Model</h2>
+  <p class="section-lead">A complete treatment of the J–M model — from historical context to statistical foundations.</p>
+
+  <div class="two-col">
+    <div class="two-col-block fade-in">
+      <h3>Historical Context</h3>
+      <p>In 1972, Z. Jelinski and P.A. Moranda published "Software Reliability Research" — one of the first attempts to apply mathematical reliability theory to software systems. Prior to this, reliability engineering existed only for hardware. The J–M model borrowed from exponential hardware failure models and adapted them to software's unique failure mechanism: latent bugs rather than physical wear.</p>
+    </div>
+    <div class="two-col-block fade-in">
+      <h3>What is Software Reliability?</h3>
+      <p>Formally, software reliability R(t) is the probability that a software system executes without failure during the time interval [0, t], given a specified operational environment. It is defined as R(t) = P(no failure in [0,t]). Unlike hardware, software does not degrade — it fails only when execution encounters a latent fault, which makes reliability a function of fault density and usage patterns.</p>
+    </div>
+  </div>
+
+  <div class="theory-block fade-in">
+    <h3>Core Assumptions — In Detail</h3>
+    <div class="concepts-grid">
+      <div class="concept-card fade-in">
+        <div class="card-icon-text">N</div>
+        <h3>Fixed Initial Fault Count (N)</h3>
+        <p>At the start of testing, the software contains exactly N faults. This number is fixed and does not change due to the testing process itself. N is treated as an unknown parameter estimated from observed failure data using Maximum Likelihood Estimation (MLE).</p>
+      </div>
+      <div class="concept-card fade-in">
+        <div class="card-icon-text">R</div>
+        <h3>Perfect Fault Removal</h3>
+        <p>Each detected fault is immediately and perfectly removed. No new faults are introduced during removal. This means the fault count decreases by exactly 1 after each failure. In reality, fault removal efficiency is typically 0.80–0.95, not 1.0.</p>
+      </div>
+      <div class="concept-card fade-in">
+        <div class="card-icon-text">E</div>
+        <h3>Equal Fault Hazard Contribution</h3>
+        <p>All remaining faults contribute equally to the hazard rate. Each fault contributes exactly phi to z(t). This homogeneity assumption means a one-line typo and a critical memory corruption bug are treated identically — a significant simplification.</p>
+      </div>
+      <div class="concept-card fade-in">
+        <div class="card-icon-text">X</div>
+        <h3>Exponential Inter-failure Times</h3>
+        <p>The time X_i between the (i-1)th and ith failures follows an exponential distribution with hazard rate z_i = phi(N-i+1). This means failures are memoryless — the probability of failing in the next instant depends only on the current fault count, not on how long since the last failure.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="theory-block fade-in">
+    <h3>The Hazard Function — Formal Definition</h3>
+    <div class="formula-block">
+      <div class="formula-text">z(t) = φ · (N − i)</div>
+      <div class="formula-vars">
+        <div class="formula-var"><span>z(t)</span> — Instantaneous hazard rate (failures per unit time)</div>
+        <div class="formula-var"><span>φ</span> — Per-fault failure rate constant (φ &gt; 0)</div>
+        <div class="formula-var"><span>N</span> — Initial total fault count (unknown, estimated)</div>
+        <div class="formula-var"><span>i</span> — Number of faults removed so far (0 ≤ i ≤ N)</div>
+        <div class="formula-var"><span>N − i</span> — Remaining fault count at the ith interval</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="theory-block fade-in">
+    <h3>The Reliability Function</h3>
+    <p style="color:var(--text-dim);margin-bottom:1.2rem;font-size:0.9rem;">For the ith inter-failure interval, the reliability (probability of no failure up to time t after the (i-1)th failure) is derived from the hazard rate:</p>
+    <div class="formula-block">
+      <div class="formula-text">R_i(t) = e^(−φ(N−i+1)·t)</div>
+      <div class="formula-vars">
+        <div class="formula-var"><span>R_i(t)</span> — Probability of surviving to time t in the ith interval</div>
+        <div class="formula-var"><span>e</span> — Euler's number (approx. 2.718)</div>
+        <div class="formula-var"><span>φ(N−i+1)</span> — Hazard rate during the ith interval</div>
+        <div class="formula-var"><span>t</span> — Time elapsed since the last failure</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="theory-block fade-in">
+    <h3>Parameter Estimation via MLE</h3>
+    <p style="color:var(--text-dim);margin-bottom:1.2rem;font-size:0.9rem;">In practice, N and φ are unknown. They are estimated using Maximum Likelihood Estimation from observed inter-failure times x₁, x₂, ..., xₙ. The log-likelihood function is:</p>
+    <div class="formula-block">
+      <div>
+        <div class="formula-text" style="font-size:1.1rem;">ln L(N,φ) = n·ln(φ) + Σ ln(N−i+1) − φ·Σ(N−i+1)·xᵢ</div>
+        <div style="margin-top:1rem;" class="formula-vars">
+          <div class="formula-var"><span>n</span> — Number of observed failures</div>
+          <div class="formula-var"><span>xᵢ</span> — ith observed inter-failure time</div>
+          <div class="formula-var">Setting ∂lnL/∂φ = 0 and ∂lnL/∂N = 0 gives the MLE estimates N̂ and φ̂</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="theory-block fade-in">
+    <h3>The Mean Value Function</h3>
+    <p style="color:var(--text-dim);margin-bottom:1.2rem;font-size:0.9rem;">The expected number of failures by time t (accumulated across all intervals) gives the mean value function μ(t), which is used to predict total failures over a testing period:</p>
+    <div class="formula-block">
+      <div class="formula-text">E[failures] = N · (1 − e^(−φt))</div>
+      <div class="formula-vars">
+        <div class="formula-var">As t → ∞, E[failures] → N (all faults eventually found)</div>
+        <div class="formula-var">The curve is concave — early testing finds faults faster</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── SIMULATION SECTION ── -->
+<section id="simulation" class="fade-in">
+  <div class="section-eyebrow">Interactive Simulation</div>
+  <h2>Fix Bugs. Watch Reliability Rise.</h2>
+  <p class="section-lead">The grey dashed staircase is the full theoretical J–M model. The cyan staircase is your live progress — each step drops instantly when you fix a bug.</p>
+
+  <div class="sim-layout">
+    <div class="sim-panel">
+      <h3>Parameters &amp; State</h3>
+      <div class="stat-row">
+        <span class="stat-label">Total Bugs (N)</span>
+        <span class="stat-value highlight" id="stat-N">20</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Bugs Fixed (i)</span>
+        <span class="stat-value" id="stat-i">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Remaining Bugs</span>
+        <span class="stat-value" id="stat-rem">20</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Hazard Rate z(t)</span>
+        <span class="stat-value highlight" id="stat-lambda">0.2000</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Reliability Improved</span>
+        <span class="stat-value" id="stat-improvement">—</span>
+      </div>
+      <div class="fix-progress">
+        <div class="fix-progress-bar" id="fix-progress-bar" style="width:0%"></div>
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">Total Bugs (N) <span id="lbl-N">20</span></div>
+        <input type="range" id="slider-N" min="5" max="100" value="20">
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">φ (phi — per-bug rate) <span id="lbl-phi">0.010</span></div>
+        <input type="range" id="slider-phi" min="1" max="50" value="10">
+      </div>
+      <div class="reliability-indicator rel-unstable" id="rel-indicator">
+        <div class="rel-label" id="rel-label">Unstable</div>
+        <div class="rel-sub"   id="rel-sub">High failure rate — fix more bugs</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-fix">Fix a Bug</button>
+        <button class="btn btn-ghost"   id="btn-reset">Reset</button>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-auto" id="btn-auto">Auto Run</button>
+      </div>
+    </div>
+
+    <div class="chart-panel">
+      <div class="chart-panel-header">
+        <div>
+          <h3>Hazard Rate z(t) vs. Time</h3>
+          <p>X-axis: time (t) &nbsp;|&nbsp; Y-axis: hazard rate z(t) = φ·(N−i)</p>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:rgba(255,255,255,0.2);border:1px dashed rgba(255,255,255,0.35);width:18px;height:4px;border-radius:2px"></div>
+            <span>Theoretical staircase</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#00d4ff;box-shadow:0 0 6px #00d4ff;width:18px;height:4px;border-radius:2px"></div>
+            <span>Your progress</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#00d4ff;box-shadow:0 0 6px #00d4ff;width:10px;height:10px"></div>
+            <span>Bug fix event</span>
+          </div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="reliabilityChart"></canvas>
+      </div>
+      <div class="chart-footnote">
+        Each step = one inter-failure time interval. The hazard rate drops instantly at each bug fix — this staircase IS the J–M model.
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── INSIGHTS ── -->
+<section id="insight" class="fade-in">
+  <div class="section-eyebrow">Interpretation</div>
+  <h2>What the Graph Tells You</h2>
+  <p class="section-lead">The staircase shape is not just visual — each step encodes a precise statistical statement.</p>
+  <div class="insight-grid">
+    <div class="insight-card fade-in">
+      <div class="ic-num">01</div>
+      <h4>Monotonically Decreasing Hazard Rate</h4>
+      <p>Each bug fix permanently reduces z(t) by exactly φ. The staircase only ever goes down — never up. This monotonic decrease is a core theorem of the model, derivable directly from the formula.</p>
+    </div>
+    <div class="insight-card fade-in">
+      <div class="ic-num">02</div>
+      <h4>Constant Rate Within Each Interval</h4>
+      <p>Between two consecutive fixes, the hazard rate is perfectly flat. This is the exponential distribution's memoryless property — past survival time does not affect future failure probability.</p>
+    </div>
+    <div class="insight-card fade-in">
+      <div class="ic-num">03</div>
+      <h4>φ Encodes System Fragility</h4>
+      <p>A higher φ means each individual fault has a larger impact. It represents the hazard per fault and is constant across all faults. Complex, tightly-coupled systems have higher φ. Simple, isolated modules have lower φ.</p>
+    </div>
+    <div class="insight-card fade-in">
+      <div class="ic-num">04</div>
+      <h4>Zero Hazard Equals Perfect Reliability</h4>
+      <p>When all N bugs are removed, z(t) = φ × 0 = 0. The model predicts theoretically perfect reliability — an idealization that underscores why the perfect repair assumption is its most criticised simplification.</p>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── COMPARISON TABLE ── -->
+<section id="comparison" class="fade-in">
+  <div class="section-eyebrow">Model Comparison</div>
+  <h2>J–M vs. Other Reliability Models</h2>
+  <p class="section-lead">The J–M model was the first but not the last. Here is how it compares to its successors.</p>
+
+  <div class="comparison-table-wrap fade-in">
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th class="highlight-col">Jelinski–Moranda (1972)</th>
+          <th>Musa Basic (1975)</th>
+          <th>Goel–Okumoto (1979)</th>
+          <th>Littlewood–Verrall (1973)</th>
+          <th>Musa–Okumoto (1984)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="feature-col">Fault count assumption</td>
+          <td class="highlight-col">Fixed N (unknown)</td>
+          <td>Fixed N</td>
+          <td>Infinite (NHPP)</td>
+          <td>Fixed N</td>
+          <td>Infinite (NHPP)</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Repair assumption</td>
+          <td class="highlight-col">Perfect repair</td>
+          <td>Perfect repair</td>
+          <td>Perfect repair</td>
+          <td>Imperfect repair</td>
+          <td>Perfect repair</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Hazard rate shape</td>
+          <td class="highlight-col">Piecewise constant (step)</td>
+          <td>Piecewise constant</td>
+          <td>Smooth exponential</td>
+          <td>Random (Bayesian)</td>
+          <td>Logarithmic decay</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Inter-failure distribution</td>
+          <td class="highlight-col">Exponential</td>
+          <td>Exponential</td>
+          <td>Poisson process</td>
+          <td>Gamma/Exponential</td>
+          <td>Exponential</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Equal fault severity</td>
+          <td class="highlight-col">Yes (all faults = φ)</td>
+          <td>Yes</td>
+          <td>Yes</td>
+          <td>No (random severity)</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Parameters</td>
+          <td class="highlight-col">2 (N, φ)</td>
+          <td>2 (N, φ)</td>
+          <td>2 (a, b)</td>
+          <td>3+ (N, α, β)</td>
+          <td>2 (θ, λ₀)</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Prediction accuracy</td>
+          <td class="highlight-col">Moderate</td>
+          <td>Moderate–Good</td>
+          <td>Good</td>
+          <td>Good (variable)</td>
+          <td>Good–Very Good</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Mathematical complexity</td>
+          <td class="highlight-col">Low</td>
+          <td>Low</td>
+          <td>Medium</td>
+          <td>High</td>
+          <td>Medium</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Handles new faults introduced</td>
+          <td class="highlight-col">No</td>
+          <td>No</td>
+          <td>No</td>
+          <td>Partially</td>
+          <td>No</td>
+        </tr>
+        <tr>
+          <td class="feature-col">Best suited for</td>
+          <td class="highlight-col">Teaching, simple systems</td>
+          <td>Execution-time models</td>
+          <td>General SRGM use</td>
+          <td>Real-world data</td>
+          <td>Large systems</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="comparison-note fade-in">
+    <p>The J–M model's greatest strength is its simplicity — 2 parameters, a closed-form formula, and an intuitive staircase visualization. It remains the standard teaching model despite its limitations, because it captures the essential insight: <em>fixing bugs improves reliability.</em></p>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+<!-- ── LIMITATIONS ── -->
+<div id="limitations">
+  <section class="fade-in">
+    <div class="section-eyebrow">Reality Check</div>
+    <h2>Where the Model Falls Short</h2>
+    <p class="section-lead">The J–M model is a foundational abstraction. Real-world software rarely behaves this cleanly.</p>
+    <div class="limit-grid">
+      <div class="limit-card fade-in">
+        <div class="lc-label">01</div>
+        <h4>Bug Fixes Introduce New Bugs</h4>
+        <p>Studies show up to 15–20% of bug fixes introduce new faults. The assumption of perfect repair (ε=1) rarely holds. More realistic models use imperfect debugging where ε &lt; 1.</p>
+      </div>
+      <div class="limit-card fade-in">
+        <div class="lc-label">02</div>
+        <h4>Non-uniform Fault Severity</h4>
+        <p>The equal-φ assumption is a strong simplification. A critical race condition contributes far more to hazard than a UI typo. Weighted models (like Littlewood-Verrall) address this.</p>
+      </div>
+      <div class="limit-card fade-in">
+        <div class="lc-label">03</div>
+        <h4>Modern Systems Are Non-stationary</h4>
+        <p>CI/CD pipelines ship new code daily, continuously introducing new faults. The fixed-N assumption completely breaks down — N is a moving target in modern development.</p>
+      </div>
+      <div class="limit-card fade-in">
+        <div class="lc-label">04</div>
+        <h4>AI and ML Systems</h4>
+        <p>Neural network failures — distributional shift, adversarial inputs, hallucinations — are not discrete bugs. There is no countable N, no φ, and no fix that restores perfect reliability.</p>
+      </div>
+      <div class="limit-card fade-in">
+        <div class="lc-label">05</div>
+        <h4>Environment and Load Effects</h4>
+        <p>Failure rates depend on workload, concurrency, and environment. The model has no notion of operational profile — a fault may only trigger under 1000 concurrent users.</p>
+      </div>
+      <div class="limit-card fade-in">
+        <div class="lc-label">06</div>
+        <h4>N is Unknown in Practice</h4>
+        <p>N must be estimated from failure data using MLE — but MLE for N is notoriously unstable for small samples. The estimate N-hat has high variance, limiting prediction confidence.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <strong>Jelinski–Moranda Software Reliability Model</strong>
+  &nbsp;·&nbsp; Interactive Educational Visualization
+  &nbsp;·&nbsp; Based on Jelinski &amp; Moranda (1972)
+  &nbsp;·&nbsp; Agampreet Saini, UPES Dehradun
+</footer>
+
+<!-- ══════════════════════════════════════════════════
+     DERIVATION MODAL
+     ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="derivation-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Mathematical Derivation</h2>
+      <p>Step-by-step derivation of the Jelinski–Moranda hazard function</p>
+      <button class="modal-close" onclick="document.getElementById('derivation-modal').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="deriv-step">
+        <div class="deriv-step-num">Step 1</div>
+        <h4>Start with the Exponential Failure Model</h4>
+        <p>We model the time between failures as exponentially distributed. For a system with a constant hazard rate λ, the probability density function (PDF) of the time to failure X is:</p>
+        <div class="deriv-formula">f(x) = λ · e^(−λx) &nbsp;&nbsp; for x ≥ 0</div>
+        <p>And the survival (reliability) function is:</p>
+        <div class="deriv-formula">R(x) = P(X &gt; x) = e^(−λx)</div>
+        <p class="deriv-note">Note: The exponential distribution is memoryless — the probability of failure in the next instant does not depend on how long the system has been running. This is the key property that makes the math tractable.</p>
+      </div>
+
+      <div class="deriv-step">
+        <div class="deriv-step-num">Step 2</div>
+        <h4>Define the Hazard Rate for the ith Interval</h4>
+        <p>Before any bugs are fixed (i = 0), there are N bugs. Each bug independently contributes a failure rate φ. The total hazard rate is the sum of all individual contributions:</p>
+        <div class="deriv-formula">z₁ = φ + φ + φ + ... (N times) = N · φ = φ(N − 0)</div>
+        <p>After fixing the 1st bug (i = 1), only N−1 bugs remain:</p>
+        <div class="deriv-formula">z₂ = φ(N − 1)</div>
+        <p>After fixing the ith bug, N−i bugs remain. Therefore the general formula for the hazard rate in the (i+1)th interval is:</p>
+        <div class="deriv-formula">z(i) = φ · (N − i) &nbsp;&nbsp; for i = 0, 1, 2, ..., N</div>
+        <p class="deriv-note">Note: This is the core J–M formula. It comes directly from the superposition principle: independent Poisson processes (one per bug) can be added together, and their rates sum linearly.</p>
+      </div>
+
+      <div class="deriv-step">
+        <div class="deriv-step-num">Step 3</div>
+        <h4>Derive the Reliability Function for Interval i</h4>
+        <p>In the ith interval, the hazard rate is z_i = φ(N−i+1). Since we are using an exponential model, the reliability function (probability of no failure up to time t into this interval) is:</p>
+        <div class="deriv-formula">R_i(t) = e^(−z_i · t) = e^(−φ(N−i+1)·t)</div>
+        <p>The PDF of the ith inter-failure time X_i is:</p>
+        <div class="deriv-formula">f_i(x) = φ(N−i+1) · e^(−φ(N−i+1)·x)</div>
+        <p>And the expected (mean) time between the (i−1)th and ith failure is:</p>
+        <div class="deriv-formula">E[X_i] = 1 / (φ(N−i+1))</div>
+        <p class="deriv-note">Note: As i increases (more bugs fixed), E[X_i] increases — the system takes longer and longer to fail. This is the reliability improvement made quantitative.</p>
+      </div>
+
+      <div class="deriv-step">
+        <div class="deriv-step-num">Step 4</div>
+        <h4>Build the Likelihood Function</h4>
+        <p>Given observed inter-failure times x₁, x₂, ..., xₙ, the joint likelihood L(N, φ) is the product of all individual PDFs (since inter-failure times are independent):</p>
+        <div class="deriv-formula">L(N, φ) = ∏ᵢ₌₁ⁿ φ(N−i+1) · e^(−φ(N−i+1)·xᵢ)</div>
+        <p>Taking the natural logarithm (log-likelihood is easier to maximize):</p>
+        <div class="deriv-formula">ln L = n·ln(φ) + Σᵢ ln(N−i+1) − φ · Σᵢ (N−i+1)·xᵢ</div>
+      </div>
+
+      <div class="deriv-step">
+        <div class="deriv-step-num">Step 5</div>
+        <h4>Maximize to Get MLE Estimates</h4>
+        <p>Differentiate ln L with respect to φ and set to zero:</p>
+        <div class="deriv-formula">∂(ln L)/∂φ = n/φ − Σᵢ (N−i+1)·xᵢ = 0</div>
+        <p>Solving for φ̂:</p>
+        <div class="deriv-formula">φ̂ = n / Σᵢ (N−i+1)·xᵢ</div>
+        <p>Differentiating with respect to N and setting to zero gives a transcendental equation for N̂ (solved numerically). Once N̂ is known, plug back in to get φ̂.</p>
+        <p class="deriv-note">Result: The two-parameter model (N, φ) is fully estimated from observed failure data. With these estimates, you can predict future failure rates and determine when to stop testing.</p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     QUESTIONS MODAL
+     ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="questions-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Practice Problems</h2>
+      <p>Numerical problems with complete step-by-step solutions</p>
+      <button class="modal-close" onclick="document.getElementById('questions-modal').classList.remove('open')">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Problem 1 -->
+      <div class="problem-block">
+        <div class="problem-header">
+          <div class="problem-num">Problem 1</div>
+          <h4>Computing Hazard Rates After Each Fix</h4>
+        </div>
+        <div class="problem-statement">
+          <strong>Given:</strong> A software system initially contains <strong>N = 5</strong> bugs. The per-bug hazard rate constant is <strong>φ = 0.02</strong> failures per hour. Failures are observed at times t₁ = 10h, t₂ = 25h, t₃ = 45h after the start of testing.
+          <br><br>
+          <strong>Find:</strong>
+          <br>(a) The hazard rate z(t) in each inter-failure interval
+          <br>(b) The expected time to next failure after each fix
+          <br>(c) The reliability R(t) at t = 5 hours into the 3rd interval
+        </div>
+
+        <button class="solution-toggle" onclick="toggleSolution('sol1')">Show Solution</button>
+        <div class="solution-block" id="sol1">
+
+          <div class="sol-step">
+            <div class="sol-step-label">Part (a) — Hazard Rates</div>
+            <p>Using the J–M formula: z(i) = φ · (N − i)</p>
+            <div class="sol-table">
+              <table>
+                <thead><tr><th>Interval</th><th>Bugs Fixed (i)</th><th>Remaining (N−i)</th><th>z(i) = φ·(N−i)</th></tr></thead>
+                <tbody>
+                  <tr><td>1st (before any fix)</td><td>i = 0</td><td>5 − 0 = 5</td><td>0.02 × 5 = <strong>0.10</strong></td></tr>
+                  <tr><td>2nd (after 1st fix)</td><td>i = 1</td><td>5 − 1 = 4</td><td>0.02 × 4 = <strong>0.08</strong></td></tr>
+                  <tr><td>3rd (after 2nd fix)</td><td>i = 2</td><td>5 − 2 = 3</td><td>0.02 × 3 = <strong>0.06</strong></td></tr>
+                  <tr><td>4th (after 3rd fix)</td><td>i = 3</td><td>5 − 3 = 2</td><td>0.02 × 2 = <strong>0.04</strong></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="sol-note">Each fix reduces the hazard rate by φ = 0.02. The staircase drops by the same amount at each step.</p>
+          </div>
+
+          <div class="sol-step">
+            <div class="sol-step-label">Part (b) — Expected Time to Next Failure</div>
+            <p>For an exponential distribution with rate z_i, the mean inter-failure time is E[X_i] = 1/z_i:</p>
+            <div class="deriv-formula">E[X₁] = 1/0.10 = <strong>10.0 hours</strong></div>
+            <div class="deriv-formula">E[X₂] = 1/0.08 = <strong>12.5 hours</strong></div>
+            <div class="deriv-formula">E[X₃] = 1/0.06 = <strong>16.7 hours</strong></div>
+            <div class="deriv-formula">E[X₄] = 1/0.04 = <strong>25.0 hours</strong></div>
+            <p class="sol-note">The expected time between failures increases with each fix. The system becomes more reliable — it takes longer to fail.</p>
+          </div>
+
+          <div class="sol-step">
+            <div class="sol-step-label">Part (c) — Reliability at t = 5h in the 3rd Interval</div>
+            <p>In the 3rd interval, z₃ = 0.06. Using the reliability function R_i(t) = e^(−z_i · t):</p>
+            <div class="deriv-formula">R₃(5) = e^(−0.06 × 5) = e^(−0.30)</div>
+            <div class="deriv-formula">R₃(5) = e^(−0.30) ≈ 0.7408</div>
+            <p class="sol-note"><strong>Answer: R₃(5) ≈ 0.7408</strong> — there is a 74.08% probability that the system runs for at least 5 hours without failure during the 3rd test interval (after 2 bugs have been fixed).</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Problem 2 -->
+      <div class="problem-block">
+        <div class="problem-header">
+          <div class="problem-num">Problem 2</div>
+          <h4>Parameter Estimation from Observed Failure Data</h4>
+        </div>
+        <div class="problem-statement">
+          <strong>Given:</strong> A software module is tested and failures are observed at the following cumulative times (in CPU hours): <strong>T₁ = 3, T₂ = 8, T₃ = 18, T₄ = 35</strong> hours. So the inter-failure times are x₁=3, x₂=5, x₃=10, x₄=17 hours.
+          <br><br>
+          <strong>Assume N = 6</strong> (estimated separately). <strong>Find:</strong>
+          <br>(a) The MLE estimate of φ̂
+          <br>(b) The hazard rate for the 5th interval
+          <br>(c) The predicted time to the next (5th) failure
+        </div>
+
+        <button class="solution-toggle" onclick="toggleSolution('sol2')">Show Solution</button>
+        <div class="solution-block" id="sol2">
+
+          <div class="sol-step">
+            <div class="sol-step-label">Part (a) — MLE Estimate of φ̂</div>
+            <p>The MLE formula for φ given observed inter-failure times xᵢ and N is:</p>
+            <div class="deriv-formula">φ̂ = n / Σᵢ₌₁ⁿ (N − i + 1) · xᵢ</div>
+            <p>With n = 4 observations and N = 6, compute the denominator term by term:</p>
+            <div class="sol-table">
+              <table>
+                <thead><tr><th>i</th><th>xᵢ (hours)</th><th>N−i+1</th><th>(N−i+1)·xᵢ</th></tr></thead>
+                <tbody>
+                  <tr><td>1</td><td>3</td><td>6−1+1 = 6</td><td>6 × 3 = 18</td></tr>
+                  <tr><td>2</td><td>5</td><td>6−2+1 = 5</td><td>5 × 5 = 25</td></tr>
+                  <tr><td>3</td><td>10</td><td>6−3+1 = 4</td><td>4 × 10 = 40</td></tr>
+                  <tr><td>4</td><td>17</td><td>6−4+1 = 3</td><td>3 × 17 = 51</td></tr>
+                  <tr class="sum-row"><td colspan="3"><strong>Sum</strong></td><td><strong>134</strong></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="deriv-formula">φ̂ = 4 / 134 ≈ <strong>0.02985 failures/hour/bug</strong></div>
+            <p class="sol-note">Each of the 6 bugs contributes approximately 0.02985 failures per hour to the total hazard rate.</p>
+          </div>
+
+          <div class="sol-step">
+            <div class="sol-step-label">Part (b) — Hazard Rate for the 5th Interval</div>
+            <p>After 4 failures (and thus 4 bug fixes), i = 4. Remaining bugs = N − i = 6 − 4 = 2.</p>
+            <div class="deriv-formula">z₅ = φ̂ · (N − i) = 0.02985 × (6 − 4)</div>
+            <div class="deriv-formula">z₅ = 0.02985 × 2 = <strong>0.05970 failures/hour</strong></div>
+          </div>
+
+          <div class="sol-step">
+            <div class="sol-step-label">Part (c) — Predicted Time to 5th Failure</div>
+            <p>The expected time to the next failure in the 5th interval is:</p>
+            <div class="deriv-formula">E[X₅] = 1 / z₅ = 1 / 0.05970</div>
+            <div class="deriv-formula">E[X₅] ≈ <strong>16.75 hours</strong></div>
+            <p>So we predict the 5th failure will occur approximately 16.75 hours after the 4th failure.</p>
+            <p class="sol-note"><strong>Summary:</strong> φ̂ ≈ 0.02985 | z₅ ≈ 0.0597 | E[X₅] ≈ 16.75 hours. Note how the expected inter-failure time has grown from 3h (first failure) to 16.75h — the system is significantly more reliable after 4 bug fixes.</p>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- JS files — order matters -->
+<script src="js/particles.js"></script>
+<script src="js/chart-setup.js"></script>
+<script src="js/simulation.js"></script>
+<script src="js/ui.js"></script>
+
+</body>
+</html>
