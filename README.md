@@ -242,9 +242,9 @@ Then visit `http://localhost:5500`
 
 > The staircase graph — grey dashed theoretical model, cyan user progress, dots at each fix event
 
-> The Mathematical Derivation modal showing all 5 steps
+> The mathematical derivation and practice problems 
 
-> Light mode — full theme switch including chart colors
+> Light mode and Dark Mode 
 
 ---
 
