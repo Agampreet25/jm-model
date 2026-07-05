@@ -3,10 +3,6 @@
 
 > A browser-based interactive tool that visually teaches the Jelinski–Moranda (1972) software reliability model — one of the earliest and most foundational models in software engineering.
 
-**Author:** Agampreet Saini  
-**Institution:** University of Petroleum and Energy Studies (UPES), Dehradun, India  
-**Program:** B.Tech. Computer Science  
-
 ---
 
 ## Table of Contents
